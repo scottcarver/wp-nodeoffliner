@@ -1,0 +1,17 @@
+{
+  "name": "Offliner",
+  "version": "1.0.0",
+  "description": "pull down a changelog, create files based on them",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "axios-rate-limit": "^1.3.0",
+    "mkdirp": "^1.0.4"
+  }
+}
