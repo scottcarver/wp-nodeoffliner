@@ -1,19 +1,27 @@
-# wp-nodeoffliner
-Node script to offload a list of urls. For practical purposes they will likely be WordPress URIs, but the solution is unopinionated on the backend since it scrapes the rendered code. The file is a flat array of urls for which to offload. The technique is 1) useful to offload a website, and also 2) to offline pages inside a PWA. 
+# wp-nodeoffliner ⬇️
+This Node script is used to offload a list of urls. For practical purposes they will likely be WordPress URIs using [wp-routemanifest](https://github.com/scottcarver/wp-nodeoffliner), but the solution is unopinionated in so much that it simply scrapes arbitrary urls.
 
-## Feed Examples
-- `/app/data-alltime.js` - a full list of all site URI's
-- `/app/data-since233113.js` - a list of site changes  since a specific isotime. This is used in the `WP_Query` to be economical about only getting URIs that changed since the last sync. 
+## Feed Examples from WP-routemanifest
+The formatting of the feed must follow a specific format, and the companion plugin will render that, at these urls:
+- `/app/index.js` - a full list of all site URI's
+- `/app/changes-since-unixtime.js` - a list of site changes  since a specific unixtime
 
 ## Example JSON Data:
-``{
-    [
+<pre>
+{
+    "base" : "https://yourwebsite.com",
+    "urls" :[
         url1,
         url2,
         url3,
         folder1/url4,
     ]
 }``
+<pre>
+
+## To run the script:
+1) npm install
+2) npm start
 
 ## Static Files
 **This will create 4 files:**
@@ -25,6 +33,3 @@ Node script to offload a list of urls. For practical purposes they will likely b
 
 Notice how folders are created automatically, and index.html files are created to create the illusion of clean folder structure.
 
-To run the script:
-1) npm install
-2) npm start
