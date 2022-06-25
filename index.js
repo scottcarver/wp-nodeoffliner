@@ -2,59 +2,60 @@
 const fs = require('fs');
 const axios = require("axios");
 const rateLimit = require('axios-rate-limit');
-// Variables
-const auth = { username: 'fakeuser', password: 'fakepass' };
-const throttledaxios = rateLimit(axios.create(), { maxRequests: 10, perMilliseconds: 1000, maxRPS: 10 });
-const remotebase = 'https://edit.pointoforegon.com';
-const localbase = 'http://localhost/gutenberg-test/';
-const activebase = localbase;
-const activeroute = activebase + 'app/index.json';
+const dotenv = require('dotenv');
 const path = require('path');
+dotenv.config();
+// Variables
+const throttledaxios = rateLimit(axios.create(), { maxRequests: 10, perMilliseconds: 1000, maxRPS: 10 });
+// const remotebase = 'https://edit.pointoforegon.com';
+// const localbase = 'http://localhost/gutenberg-test/';
+const activebase = process.env.WP_INSTALL_BASE;
+const activeroute = process.env.WP_INSTALL_BASE + 'app/index.json';
+const auth = { username: process.env.WP_AUTH_USER, password: process.env.WP_AUTH_PASS };
+const publicdirectory = process.env.WP_OUTPUT_DIR;
+
 
 getChanges();
 
-async function getChanges(){
-    console.log(activeroute);
 
-    // Remove /public/ cache
-    fs.rm('public', { recursive: true }, (err) => {
-        // Return, if error
-        if (err) {  return console.error(err); }
-        // Create /public/ fresh
-        fs.mkdir(path.join(__dirname, 'public/'),{ recursive: true }, (err) => { if (err) {throw err;} });
-        
-       
-        /*
-         // Create Changelog file
-         fs.writeFile("app/changelog.json", "data",
-         {
-             encoding: "utf8",
-             flag: "w",
-             mode: 0o666
-         },
-         (err) => {
-             if (err)
-             console.log(err);
-             else {
-             console.log("File written successfully\n");
-             console.log("The written has the following contents:");
-             console.log(fs.readFileSync("app/changelog.json", "utf8"));
-             }
-         });
-         */
-    });
+async function getChanges(){
+    
+
+    // activeroute
+
+    // If File exists
+    if (fs.existsSync(publicdirectory)) {
+        console.log("Deleting existing build: ",  publicdirectory);
+   
+        // Remove /public/ cache
+        fs.rm(publicdirectory, { recursive: true }, (err) => {
+            // Return, if error, otherwise
+            if (err) {  return console.error(err); }
+            // Create /public/ fresh
+            fs.mkdir(path.join(__dirname, publicdirectory),{ recursive: true }, (err) => { if (err) {throw err;} });
+        });
+    }
+
+    console.log("Found source feed: ",  activeroute);
    
     // Retrieve Changelog
     const data = await axios.get(activeroute, {auth}).then(function (response) { 
+        console.log("The source seed contents include:");  
         console.log(response.data);  
-        // Write Changelog
-       // fs.writeFile("public/changelog.json", JSON.stringify(response.data), (err) => {if (err) { throw err;} });  
-        // Write Resources // .permalinks.slice(0, 3)
 
+         // Write Last Meal Log
+        var parsedmeal = JSON.stringify(response.data);
+         fs.writeFile(publicdirectory+'/lastmeal.json', parsedmeal, (err) => {
+            if (err) console.log(err); else { 
+                console.log("🎫 created log ⭢  " + publicdirectory + "lastmeal.json");
+                
+            }
+        });
+     
         response.data.urls.forEach( function(str) {
             var filename =  str.split('/').pop();
-            console.log('Downloading ' + response.data.base + str);
-            getResource(response.data.base + str); // , filename, function(){console.log('Finished Downloading' + filename)
+            // console.log('Downloading ' + response.data.base + str);
+            getResource(response.data.base + str);
         });
 
        // getResource(str);
@@ -72,19 +73,17 @@ async function getResource(src){
         var split = cleanpath(src).split('/');
         var minibase = '';
         var filename = ''
-
-       // console.log("split:" + split + " and length is:" + split.length);
-        // console.log(src + ' Traling slash is ' + lastChar + hasTrailingSlash);
+        var parsedpage = JSON.parse(JSON.stringify(response.data));
+        // swappath(
         
         // Clean Directories
        if(hasTrailingSlash){
             // Make Directory
             fs.mkdirSync(cleanpath(src), { recursive: true });
             // Make File
-            fs.writeFile(cleanpath(src)+'index.html', JSON.parse(JSON.stringify(response.data)), (err) => {if (err) {throw err;} else{ 
-                console.log("✨ created a new html view at " + cleanpath(src));} });
+            fs.writeFile(cleanpath(src)+'index.html', swappath(parsedpage), (err) => {if (err) {throw err;} else{ 
+                console.log("🏷️  created html⭢  " + cleanpath(src));} });
        }
-
        
         // Single Files
         if(!hasTrailingSlash){
@@ -95,7 +94,7 @@ async function getResource(src){
             // Check if the Support Directory exists
             if(!fs.existsSync(cleanpath(minibase))){
                 fs.mkdirSync(cleanpath(minibase), { recursive: true });
-                console.log('📁 created a new directory at ' + minibase);
+                console.log('📂 created dir ⭢  ' + minibase);
             }
            
             // Encode, if JSON
@@ -103,13 +102,10 @@ async function getResource(src){
 
             // Write the file, now that the folder exists
             fs.writeFile(cleanpath(src), response.data, (err) => {
-                if (err) console.log(err); else { console.log("✅ created a new file at " + cleanpath(src));}
+                if (err) console.log(err); else { console.log("🎫 created file⭢  " + cleanpath(src));}
             });
 
         } 
-      
-       
-   
         
     }).catch((error) => {
         console.log(error);
@@ -123,34 +119,17 @@ async function getResource(src){
 // Clean the path by removing the URL base
 function cleanpath(path){
     // Remove the base
-    const itcleaned = path.replace(activebase, 'public/');
+    const itcleaned = path.replace(activebase, publicdirectory+'/');
     // Return the url minus the base
     return itcleaned;
 }
 
-
-/*
-
-
-var fs = require('fs');
-var request = require('request');
-
-var urlindex = "https://edit.pointoforegon.com/changelog/in-out.json";
-
-var download = function(url, dest, callback){
-
-    request.get(url)
-    .on('error', function(err) {console.log(err)} )
-    .pipe(fs.createWriteStream(dest))
-    .on('close', callback);
-
-};
-
-download(urlindex, 'index.json', function(){console.log('Finished Downloading')});
-*/
-/*
-urlList.forEach( function(str) {
-	var filename =  str.split('/').pop();
-	console.log('Downloading ' + filename);
-	download(str, filename, function(){console.log('Finished Downloading' + filename)});
-});*/
+// Swap out URL paths in the HTML RESPONSE
+function swappath(html){
+    // Remove the base
+    // console.log("html is " + html);
+    const htmlcleaned = html.replace(activebase, publicdirectory+'/');
+    // Return the url minus the base
+    // return htmlcleaned;
+    return 'boop'
+}
