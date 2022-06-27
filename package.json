@@ -1,5 +1,5 @@
 {
-  "name": "WP Node Offliner",
+  "name": "wp-node-offliner",
   "version": "1.0.0",
   "description": "Pull down a bunch of files from a WP install",
   "main": "index.js",
